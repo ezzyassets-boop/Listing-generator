@@ -514,7 +514,7 @@
 
     const colorWords = colorway ? colorway.trim().split(/\s+/) : [];
     const colorNote = colorway
-      ? `Colorway: "${colorway}". RULE: Every single colour word (${colorWords.join(', ')}) MUST appear in the Spoonflower Title AND in the Pinterest Title. At least 2-3 tags must include those colour words combined with other keywords.`
+      ? 'Colorway: "' + colorway + '". RULE: Every single colour word (' + colorWords.join(', ') + ') MUST appear in the Spoonflower Title AND in the Pinterest Title. At least 2-3 tags must include those colour words combined with other keywords.'
       : 'No colorway provided.';
 
     const prompt = `You are an expert SEO copywriter for surface pattern designers. Generate Spoonflower and Pinterest listing copy for this pattern.
@@ -593,4 +593,4 @@ PINTEREST_DESCRIPTION: [description]`;
 
     } catch (e) {
       document.getElementById('errorMsg').textContent = 'Something went wrong. Please try again. (' + e.message + ')';
-      document.getElementById(
+      document.getEl
