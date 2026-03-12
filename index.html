@@ -384,12 +384,6 @@
     </button>
   </div>
 
-  <!-- Links -->
-  <div class="card" id="linksCard" style="display:none">
-    <div class="card-label">Product Links</div>
-    <div class="links-grid" id="linksGrid"></div>
-  </div>
-
   <!-- Error -->
   <div class="error-box" id="errorBox" style="display:none">
     <span>⚠</span><span id="errorMsg"></span>
@@ -463,6 +457,12 @@
       </div>
     </div>
 
+    <!-- Links -->
+    <div class="card" id="linksCard" style="display:none">
+      <div class="card-label">Product Links</div>
+      <div class="links-grid" id="linksGrid"></div>
+    </div>
+
   </div>
 </div>
 
@@ -490,9 +490,9 @@
       <div class="link-card">
         <div style="flex:1">
           <div class="link-label">${label}</div>
-          <a href="${url}" target="_blank" class="link-url">${url},</a>
+          <a href="${url}" target="_blank" class="link-url">${url}</a>
         </div>
-        <button class="link-copy-btn" onclick="copyText(this,'${url},')" title="Copy">
+        <button class="link-copy-btn" onclick="copyText(this,'${url}')" title="Copy">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         </button>
       </div>`;
@@ -512,55 +512,68 @@
     document.getElementById('errorBox').style.display = 'none';
     document.getElementById('results').style.display = 'none';
 
+    const colorWords = colorway ? colorway.trim().split(/\s+/) : [];
     const colorNote = colorway
-      ? `Colorway: "${colorway}". Every single colour word from this colorway MUST appear in both the Spoonflower Title and the Pinterest Title. At least 2–3 Spoonflower tags must also incorporate those colour words packed in with other keywords.`
+      ? `Colorway: "${colorway}". RULE: Every single colour word (${colorWords.join(', ')}) MUST appear in the Spoonflower Title AND in the Pinterest Title. At least 2-3 tags must include those colour words combined with other keywords.`
       : 'No colorway provided.';
 
-    const prompt = `You are an expert SEO copywriter specialising in surface pattern design listings for Spoonflower and Pinterest. Generate listing copy for the following pattern.
+    const prompt = `You are an expert SEO copywriter for surface pattern designers. Generate Spoonflower and Pinterest listing copy for this pattern.
 
 PATTERN DESCRIPTION: "${description}"
 ${colorNote}
 
-Generate exactly the following five sections with these STRICT rules:
+CHARACTER COUNTING RULES - these are absolute and non-negotiable:
+- Count EVERY character including spaces
+- After writing each field, count the characters and adjust until it fits exactly
+- Never go over the maximum. Never go under the minimum.
 
 SPOONFLOWER TITLE
-- Keywords only, no punctuation
-- MUST be exactly 72–75 characters (count carefully)
-- Include colour words from colorway if provided
+- Keywords only, no punctuation, no commas
+- MUST be between 72 and 75 characters total (count spaces too)
+- Must include all colour words from colorway if provided
 
 SPOONFLOWER DESCRIPTION
-- 2–3 natural, complete sentences (no fragments)
-- MUST be exactly 220–230 characters (count carefully)
+- 2-3 complete natural sentences
+- MUST be between 220 and 230 characters total
 - Must end with a full stop
-- Never cut off mid-sentence
-- No mention of fabric, wallpaper, textile, or material
+- Never use the words: fabric, wallpaper, textile, material
 
-SPOONFLOWER TAGS
-- Exactly 13 tags
-- Each tag MUST be 18–20 characters long (count every character including spaces)
-- Pack 2–3 keywords together with spaces to reach 18–20 characters
+SPOONFLOWER TAGS - 13 tags total
+- Each individual tag MUST be between 18 and 20 characters (count every space and letter)
+- Every tag must use DIFFERENT keywords - no word may appear in more than 2 tags
+- Combine 2-3 different keywords per tag with spaces to hit 18-20 chars
+- Example of a valid tag: "floral boho pattern" = 19 chars
 - Never use: fabric, wallpaper, textile, material
-- At least 2–3 tags must include the colour words if colorway was provided
-- List each tag on its own line, numbered 1–13
+- At least 2 tags must include colour words from the colorway
 
 PINTEREST TITLE
-- Keyword-rich, no punctuation
-- MUST be exactly 95–100 characters (count carefully)
-- Include colour words from colorway if provided
+- Keywords only, no punctuation
+- MUST be between 95 and 100 characters total
+- Must include all colour words from colorway if provided
 
 PINTEREST DESCRIPTION
-- Flowing natural sentences
-- MUST be exactly 740–760 characters (count carefully)
-- Must end with a full stop — never cut off mid-sentence
-- No hashtags
+- Flowing natural sentences, no hashtags
+- MUST be between 740 and 760 characters total
+- Must end with a full stop, never cut off mid-sentence
 
-Format your response EXACTLY as:
+IMPORTANT: Your response must contain ONLY the listing copy in the format below. Do not add any instructions, suggestions, alternative versions, or any text starting with "Human:" or "Generate". Output only the five sections of copy.
+
+Respond in EXACTLY this format, nothing else:
 SPOONFLOWER_TITLE: [title]
 SPOONFLOWER_DESCRIPTION: [description]
 SPOONFLOWER_TAGS:
 1. [tag]
 2. [tag]
-...
+3. [tag]
+4. [tag]
+5. [tag]
+6. [tag]
+7. [tag]
+8. [tag]
+9. [tag]
+10. [tag]
+11. [tag]
+12. [tag]
 13. [tag]
 PINTEREST_TITLE: [title]
 PINTEREST_DESCRIPTION: [description]`;
@@ -580,108 +593,4 @@ PINTEREST_DESCRIPTION: [description]`;
 
     } catch (e) {
       document.getElementById('errorMsg').textContent = 'Something went wrong. Please try again. (' + e.message + ')';
-      document.getElementById('errorBox').style.display = 'flex';
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '✦&nbsp; Generate Listing';
-    }
-  }
-
-  function parseOutput(text) {
-    const extract = (pattern) => {
-      const m = text.match(pattern);
-      return m ? m[1].trim() : '';
-    };
-    const spoonTitle = extract(/SPOONFLOWER_TITLE:\s*(.+?)(?:\n|SPOONFLOWER_DESCRIPTION)/is);
-    const spoonDesc  = extract(/SPOONFLOWER_DESCRIPTION:\s*([\s\S]+?)(?:\n\nSPOONFLOWER_TAGS|SPOONFLOWER_TAGS)/i);
-    const tagsRaw    = extract(/SPOONFLOWER_TAGS:\s*([\s\S]+?)(?:\n\nPINTEREST_TITLE|PINTEREST_TITLE)/i);
-    const pinTitle   = extract(/PINTEREST_TITLE:\s*(.+?)(?:\n|PINTEREST_DESCRIPTION)/is);
-    const pinDesc    = extract(/PINTEREST_DESCRIPTION:\s*([\s\S]+?)$/i);
-
-    const tags = tagsRaw
-      .split(/\n/)
-      .map(t => t.replace(/^\d+[\.\)]\s*/, '').replace(/^[-•]\s*/, '').trim())
-      .filter(t => t.length >= 3 && t.length <= 25)
-      .slice(0, 13);
-
-    return { spoonTitle, spoonDesc, tags, pinTitle, pinDesc };
-  }
-
-  function renderResults(text, designId) {
-    const { spoonTitle, spoonDesc, tags, pinTitle, pinDesc } = parseOutput(text);
-
-    setField('spoonTitle', spoonTitle, 72, 75);
-    setField('spoonDesc', spoonDesc, 220, 230);
-    setField('pinTitle', pinTitle, 95, 100);
-    setField('pinDesc', pinDesc, 740, 760);
-
-    currentTags = tags;
-    const wrap = document.getElementById('tagsWrap');
-    wrap.innerHTML = tags.map((tag, i) => `
-      <button class="tag-pill" id="tag-${i}" onclick="copyTag(this,'${tag.replace(/'/g,"\\'")}')">
-        ${escapeHtml(tag)}<span class="tag-char">${tag.length}</span>
-      </button>`).join('');
-    document.getElementById('tagCountLabel').textContent = `${tags.length} of 13 tags`;
-    document.getElementById('copyAllBtn').classList.remove('copied');
-    document.getElementById('copyAllBtn').textContent = 'Copy all tags';
-
-    document.getElementById('noIdNote').style.display = designId ? 'none' : 'block';
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function setField(id, value, min, max) {
-    document.getElementById(id).textContent = value;
-    const counter = document.getElementById(id + 'Count');
-    if (!value) { counter.textContent = `— / ${min}–${max}`; counter.className = 'char-counter counter-empty'; return; }
-    const len = value.length;
-    const cls = len > max ? 'counter-over' : len >= min ? 'counter-good' : 'counter-low';
-    const note = len > max ? ` ⚠ over by ${len - max}` : '';
-    counter.textContent = `${len} / ${min}–${max}${note}`;
-    counter.className = `char-counter ${cls}`;
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  async function copyField(btn, id) {
-    const text = document.getElementById(id).textContent;
-    await copyText(btn, text);
-  }
-
-  async function copyText(btn, text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      btn.classList.add('copied');
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-      }, 1800);
-    } catch(e) {}
-  }
-
-  async function copyTag(btn, tag) {
-    try {
-      await navigator.clipboard.writeText(tag + ',');
-      btn.classList.add('copied');
-      const prev = btn.innerHTML;
-      btn.innerHTML = '✓ ' + escapeHtml(tag) + '<span class="tag-char">' + tag.length + '</span>';
-      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prev; }, 1800);
-    } catch(e) {}
-  }
-
-  async function copyAllTags() {
-    const text = currentTags.map(t => t + ',').join(' ');
-    try {
-      await navigator.clipboard.writeText(text);
-      const btn = document.getElementById('copyAllBtn');
-      btn.classList.add('copied');
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy all tags'; }, 1800);
-    } catch(e) {}
-  }
-</script>
-</body>
-</html>
+      document.getElementById(
