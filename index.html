@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listing Generator — Surface Pattern Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background: #f7f3ee;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(210,185,160,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(180,165,140,0.12) 0%, transparent 60%);
+      padding: 48px 20px 80px;
+      color: #2d2420;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .header-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #a8927a;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 400;
+      color: #2d2420;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .header h1 em { font-style: italic; color: #8b6b52; }
+    .header-sub {
+      font-size: 13px;
+      color: #9e8878;
+      font-weight: 300;
+    }
+
+    .container { max-width: 760px; margin: 0 auto; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(80,50,30,0.06), 0 8px 24px rgba(80,50,30,0.05);
+      border: 1px solid rgba(180,155,130,0.15);
+    }
+
+    .card-label {
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #b89e8a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, rgba(180,155,130,0.2), transparent);
+    }
+
+    .field-group { margin-bottom: 20px; }
+    .field-group:last-of-type { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: #a08878;
+      margin-bottom: 8px;
+    }
+    label .optional {
+      font-weight: 300;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 10px;
+      color: #c4ae9e;
+      margin-left: 4px;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #2d2420;
+      background: #faf8f5;
+      border: 1px solid rgba(180,155,130,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    textarea { resize: none; height: 80px; }
+    textarea:focus, input:focus {
+      border-color: rgba(139,107,82,0.45);
+      box-shadow: 0 0 0 3px rgba(139,107,82,0.07);
+      background: #fff;
+    }
+    textarea::placeholder, input::placeholder {
+      color: #c4ae9e;
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 520px) { .input-row { grid-template-columns: 1fr; } }
+
+    .generate-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #8b6b52 0%, #a07860 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .generate-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .generate-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .output-field { margin-bottom: 18px; }
+    .output-field:last-child { margin-bottom: 0; }
+    .output-field > label { margin-bottom: 6px; }
+
+    .output-wrap { position: relative; }
+    .output-text {
+      width: 100%;
+      background: #faf8f5;
+      border: 1px solid rgba(180,155,130,0.2);
+      border-radius: 10px;
+      padding: 12px 48px 12px 16px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      min-height: 48px;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      border: 1px solid rgba(180,155,130,0.3);
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      color: #a08878;
+    }
+    .copy-btn:hover { background: #f0ebe5; color: #6b4e38; }
+    .copy-btn.copied { background: #e8f5e9; border-color: rgba(76,175,80,0.3); color: #4caf50; }
+
+    .char-counter {
+      font-size: 10.5px;
+      font-weight: 500;
+      margin-top: 5px;
+      text-align: right;
+      transition: color 0.3s;
+    }
+    .counter-empty { color: #c4ae9e; }
+    .counter-good { color: #5aa86a; }
+    .counter-low { color: #e8a040; }
+    .counter-over { color: #d04040; font-weight: 600; }
+
+    .tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: #faf0e8;
+      border: 1px solid rgba(180,140,100,0.25);
+      color: #6b4e38;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tag-pill:hover { background: #f0e4d4; border-color: rgba(139,107,82,0.4); transform: translateY(-1px); }
+    .tag-pill.copied { background: #e8f5e9; border-color: rgba(76,175,80,0.3); color: #3d8b4a; }
+    .tag-char { font-size: 9.5px; opacity: 0.5; font-weight: 500; }
+
+    .tags-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .tag-count-label { font-size: 10px; color: #b89e8a; }
+    .copy-all-tags {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(139,107,82,0.3);
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: #8b6b52;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-all-tags:hover { background: #f0e4d4; }
+    .copy-all-tags.copied { background: #e8f5e9; color: #4caf50; border-color: rgba(76,175,80,0.3); }
+
+    .links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 520px) { .links-grid { grid-template-columns: 1fr; } }
+
+    .link-card {
+      background: #faf8f5;
+      border: 1px solid rgba(180,155,130,0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .link-label {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #b89e8a;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    .link-url {
+      font-size: 11.5px;
+      color: #7a9fb5;
+      word-break: break-all;
+      line-height: 1.4;
+      text-decoration: none;
+    }
+    .link-url:hover { text-decoration: underline; }
+    .link-copy-btn {
+      flex-shrink: 0;
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      border: 1px solid rgba(180,155,130,0.25);
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a08878;
+      transition: all 0.15s;
+    }
+    .link-copy-btn:hover { background: #f0ebe5; color: #6b4e38; }
+    .link-copy-btn.copied { background: #e8f5e9; color: #4caf50; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .section-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .icon-spoon { background: #fff0e8; }
+    .icon-pin { background: #ffeef0; }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 400;
+    }
+
+    .error-box {
+      background: #fff5f5;
+      border: 1px solid rgba(208,64,64,0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #c04040;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .results { animation: fadeUp 0.4s ease both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .no-id-note {
+      font-size: 11px;
+      color: #b89e8a;
+      font-style: italic;
+      margin-top: 12px;
+    }
+
+    svg { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-eyebrow">Surface Pattern Design Studio</div>
+    <h1>Listing <em>Generator</em></h1>
+    <div class="header-sub">SEO-optimised copy for Spoonflower &amp; Pinterest — instantly</div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="card-label">Your Pattern</div>
+    <div class="field-group">
+      <label>Pattern Description <span class="optional">required</span></label>
+      <textarea id="description" placeholder="e.g. watercolour florals, botanical leaves, vintage cottagecore, hand-painted style..."></textarea>
+    </div>
+    <div class="input-row">
+      <div class="field-group">
+        <label>Colorway <span class="optional">optional</span></label>
+        <input type="text" id="colorway" placeholder="e.g. terracotta sage cream blush" />
+      </div>
+      <div class="field-group">
+        <label>Design ID <span class="optional">optional</span></label>
+        <input type="text" id="designId" placeholder="e.g. 12345678" inputmode="numeric" />
+      </div>
+    </div>
+    <button class="generate-btn" id="generateBtn" onclick="generate()">
+      ✦&nbsp; Generate Listing
+    </button>
+  </div>
+
+  <!-- Links -->
+  <div class="card" id="linksCard" style="display:none">
+    <div class="card-label">Product Links</div>
+    <div class="links-grid" id="linksGrid"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox" style="display:none">
+    <span>⚠</span><span id="errorMsg"></span>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results" style="display:none">
+
+    <!-- Spoonflower -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-icon icon-spoon">🌿</div>
+        <div class="section-title">Spoonflower Listing</div>
+      </div>
+      <div class="output-field">
+        <label>Title</label>
+        <div class="output-wrap">
+          <div class="output-text" id="spoonTitle"></div>
+          <button class="copy-btn" onclick="copyField(this,'spoonTitle')" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="char-counter" id="spoonTitleCount"></div>
+      </div>
+      <div class="output-field">
+        <label>Description</label>
+        <div class="output-wrap">
+          <div class="output-text" id="spoonDesc"></div>
+          <button class="copy-btn" onclick="copyField(this,'spoonDesc')" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="char-counter" id="spoonDescCount"></div>
+      </div>
+      <div class="output-field">
+        <label>Tags <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px;color:#c4ae9e">— click a tag to copy it</span></label>
+        <div class="tags-wrap" id="tagsWrap"></div>
+        <div class="tags-actions">
+          <span class="tag-count-label" id="tagCountLabel"></span>
+          <button class="copy-all-tags" id="copyAllBtn" onclick="copyAllTags()">Copy all tags</button>
+        </div>
+      </div>
+      <p class="no-id-note" id="noIdNote" style="display:none">Add a Design ID above to auto-generate product links.</p>
+    </div>
+
+    <!-- Pinterest -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-icon icon-pin">📌</div>
+        <div class="section-title">Pinterest Listing</div>
+      </div>
+      <div class="output-field">
+        <label>Title</label>
+        <div class="output-wrap">
+          <div class="output-text" id="pinTitle"></div>
+          <button class="copy-btn" onclick="copyField(this,'pinTitle')" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="char-counter" id="pinTitleCount"></div>
+      </div>
+      <div class="output-field">
+        <label>Description</label>
+        <div class="output-wrap">
+          <div class="output-text" id="pinDesc"></div>
+          <button class="copy-btn" onclick="copyField(this,'pinDesc')" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="char-counter" id="pinDescCount"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let currentTags = [];
+
+  // Auto-update links when design ID is typed
+  document.getElementById('designId').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g,'');
+    updateLinks();
+  });
+
+  function updateLinks() {
+    const id = document.getElementById('designId').value.trim();
+    const card = document.getElementById('linksCard');
+    if (!id) { card.style.display = 'none'; return; }
+    const fabric = `https://www.spoonflower.com/en/fabric/${id}`;
+    const wallpaper = `https://www.spoonflower.com/en/wallpaper/${id}`;
+    document.getElementById('linksGrid').innerHTML = linkCardHTML('Fabric', fabric) + linkCardHTML('Wallpaper', wallpaper);
+    card.style.display = 'block';
+  }
+
+  function linkCardHTML(label, url) {
+    return `
+      <div class="link-card">
+        <div style="flex:1">
+          <div class="link-label">${label}</div>
+          <a href="${url}" target="_blank" class="link-url">${url},</a>
+        </div>
+        <button class="link-copy-btn" onclick="copyText(this,'${url},')" title="Copy">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>`;
+  }
+
+  async function generate() {
+    const description = document.getElementById('description').value.trim();
+    if (!description) return;
+
+    const colorway = document.getElementById('colorway').value.trim();
+    const designId = document.getElementById('designId').value.trim();
+
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Generating your listing…';
+
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+
+    const colorNote = colorway
+      ? `Colorway: "${colorway}". Every single colour word from this colorway MUST appear in both the Spoonflower Title and the Pinterest Title. At least 2–3 Spoonflower tags must also incorporate those colour words packed in with other keywords.`
+      : 'No colorway provided.';
+
+    const prompt = `You are an expert SEO copywriter specialising in surface pattern design listings for Spoonflower and Pinterest. Generate listing copy for the following pattern.
+
+PATTERN DESCRIPTION: "${description}"
+${colorNote}
+
+Generate exactly the following five sections with these STRICT rules:
+
+SPOONFLOWER TITLE
+- Keywords only, no punctuation
+- MUST be exactly 72–75 characters (count carefully)
+- Include colour words from colorway if provided
+
+SPOONFLOWER DESCRIPTION
+- 2–3 natural, complete sentences (no fragments)
+- MUST be exactly 220–230 characters (count carefully)
+- Must end with a full stop
+- Never cut off mid-sentence
+- No mention of fabric, wallpaper, textile, or material
+
+SPOONFLOWER TAGS
+- Exactly 13 tags
+- Each tag MUST be 18–20 characters long (count every character including spaces)
+- Pack 2–3 keywords together with spaces to reach 18–20 characters
+- Never use: fabric, wallpaper, textile, material
+- At least 2–3 tags must include the colour words if colorway was provided
+- List each tag on its own line, numbered 1–13
+
+PINTEREST TITLE
+- Keyword-rich, no punctuation
+- MUST be exactly 95–100 characters (count carefully)
+- Include colour words from colorway if provided
+
+PINTEREST DESCRIPTION
+- Flowing natural sentences
+- MUST be exactly 740–760 characters (count carefully)
+- Must end with a full stop — never cut off mid-sentence
+- No hashtags
+
+Format your response EXACTLY as:
+SPOONFLOWER_TITLE: [title]
+SPOONFLOWER_DESCRIPTION: [description]
+SPOONFLOWER_TAGS:
+1. [tag]
+2. [tag]
+...
+13. [tag]
+PINTEREST_TITLE: [title]
+PINTEREST_DESCRIPTION: [description]`;
+
+    try {
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
+      });
+
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message || data.error);
+
+      const text = data.content.map(b => b.text || '').join('\n');
+      renderResults(text, designId);
+
+    } catch (e) {
+      document.getElementById('errorMsg').textContent = 'Something went wrong. Please try again. (' + e.message + ')';
+      document.getElementById('errorBox').style.display = 'flex';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✦&nbsp; Generate Listing';
+    }
+  }
+
+  function parseOutput(text) {
+    const extract = (pattern) => {
+      const m = text.match(pattern);
+      return m ? m[1].trim() : '';
+    };
+    const spoonTitle = extract(/SPOONFLOWER_TITLE:\s*(.+?)(?:\n|SPOONFLOWER_DESCRIPTION)/is);
+    const spoonDesc  = extract(/SPOONFLOWER_DESCRIPTION:\s*([\s\S]+?)(?:\n\nSPOONFLOWER_TAGS|SPOONFLOWER_TAGS)/i);
+    const tagsRaw    = extract(/SPOONFLOWER_TAGS:\s*([\s\S]+?)(?:\n\nPINTEREST_TITLE|PINTEREST_TITLE)/i);
+    const pinTitle   = extract(/PINTEREST_TITLE:\s*(.+?)(?:\n|PINTEREST_DESCRIPTION)/is);
+    const pinDesc    = extract(/PINTEREST_DESCRIPTION:\s*([\s\S]+?)$/i);
+
+    const tags = tagsRaw
+      .split(/\n/)
+      .map(t => t.replace(/^\d+[\.\)]\s*/, '').replace(/^[-•]\s*/, '').trim())
+      .filter(t => t.length >= 3 && t.length <= 25)
+      .slice(0, 13);
+
+    return { spoonTitle, spoonDesc, tags, pinTitle, pinDesc };
+  }
+
+  function renderResults(text, designId) {
+    const { spoonTitle, spoonDesc, tags, pinTitle, pinDesc } = parseOutput(text);
+
+    setField('spoonTitle', spoonTitle, 72, 75);
+    setField('spoonDesc', spoonDesc, 220, 230);
+    setField('pinTitle', pinTitle, 95, 100);
+    setField('pinDesc', pinDesc, 740, 760);
+
+    currentTags = tags;
+    const wrap = document.getElementById('tagsWrap');
+    wrap.innerHTML = tags.map((tag, i) => `
+      <button class="tag-pill" id="tag-${i}" onclick="copyTag(this,'${tag.replace(/'/g,"\\'")}')">
+        ${escapeHtml(tag)}<span class="tag-char">${tag.length}</span>
+      </button>`).join('');
+    document.getElementById('tagCountLabel').textContent = `${tags.length} of 13 tags`;
+    document.getElementById('copyAllBtn').classList.remove('copied');
+    document.getElementById('copyAllBtn').textContent = 'Copy all tags';
+
+    document.getElementById('noIdNote').style.display = designId ? 'none' : 'block';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setField(id, value, min, max) {
+    document.getElementById(id).textContent = value;
+    const counter = document.getElementById(id + 'Count');
+    if (!value) { counter.textContent = `— / ${min}–${max}`; counter.className = 'char-counter counter-empty'; return; }
+    const len = value.length;
+    const cls = len > max ? 'counter-over' : len >= min ? 'counter-good' : 'counter-low';
+    const note = len > max ? ` ⚠ over by ${len - max}` : '';
+    counter.textContent = `${len} / ${min}–${max}${note}`;
+    counter.className = `char-counter ${cls}`;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function copyField(btn, id) {
+    const text = document.getElementById(id).textContent;
+    await copyText(btn, text);
+  }
+
+  async function copyText(btn, text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      }, 1800);
+    } catch(e) {}
+  }
+
+  async function copyTag(btn, tag) {
+    try {
+      await navigator.clipboard.writeText(tag + ',');
+      btn.classList.add('copied');
+      const prev = btn.innerHTML;
+      btn.innerHTML = '✓ ' + escapeHtml(tag) + '<span class="tag-char">' + tag.length + '</span>';
+      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prev; }, 1800);
+    } catch(e) {}
+  }
+
+  async function copyAllTags() {
+    const text = currentTags.map(t => t + ',').join(' ');
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyAllBtn');
+      btn.classList.add('copied');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy all tags'; }, 1800);
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
